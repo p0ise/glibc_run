@@ -38,10 +38,24 @@ git clone https://github.com/p0ise/glibc_run.git
 cd glibc_run
 ```
 
-3. (Optional) Initialize and update submodules:
+3. Run the installation script:
+
+```sh
+sudo ./install.sh
+```
+
+4. (Optional) Initialize and update submodules:
 
 ```sh
 git submodule update --init --recursive
+```
+
+## Uninstall
+
+If you need to uninstall `glibc_run` from your system, run the uninstall script:
+
+```sh
+sudo ./uninstall.sh
 ```
 
 ### Usage
@@ -49,7 +63,7 @@ git submodule update --init --recursive
 To use glibc_run to run your program, use the following command format:
 
 ```sh
-./glibc_run <glibc_version> <your_program>
+glibc_run <glibc_version> <your_program>
 ```
 
 #### Example
@@ -57,7 +71,7 @@ To use glibc_run to run your program, use the following command format:
 Running a program named `example` under glibc version 2.27:
 
 ```sh
-./glibc_run 2.27 example
+glibc_run 2.27 example
 ```
 
 ## Contributing

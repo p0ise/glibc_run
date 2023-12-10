@@ -38,18 +38,32 @@ git clone https://github.com/p0ise/glibc_run.git
 cd glibc_run
 ```
 
-3. (可选) 初始化和更新子模块：
+3. 运行安装脚本：
+
+```sh
+sudo ./install.sh
+```
+
+4. (可选) 初始化和更新子模块：
 
 ```sh
 git submodule update --init --recursive
 ```
 
-### 使用方法
+## 卸载
 
-要使用 `glibc_run` 运行您的程序，请使用以下命令格式：
+如果需要从系统中卸载 `glibc_run`，请运行卸载脚本：
 
 ```sh
-./glibc_run <glibc_version> <your_program>
+sudo ./uninstall.sh
+```
+
+### 使用方法
+
+要使用 `glibc_run` 运行程序，只需使用以下格式的命令：
+
+```sh
+glibc_run <glibc_version> <your_program>
 ```
 
 #### 示例
@@ -57,7 +71,7 @@ git submodule update --init --recursive
 在 glibc 2.27 版本下运行名为 `example` 的程序：
 
 ```sh
-./glibc_run 2.27 example
+glibc_run 2.27 example
 ```
 
 ## 贡献
