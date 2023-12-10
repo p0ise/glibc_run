@@ -50,7 +50,7 @@ sudo ./install.sh
 git submodule update --init --recursive
 ```
 
-## 卸载
+### 卸载
 
 如果需要从系统中卸载 `glibc_run`，请运行卸载脚本：
 

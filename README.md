@@ -50,7 +50,7 @@ sudo ./install.sh
 git submodule update --init --recursive
 ```
 
-## Uninstall
+### Uninstall
 
 If you need to uninstall `glibc_run` from your system, run the uninstall script:
 
