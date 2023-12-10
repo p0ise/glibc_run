@@ -77,4 +77,4 @@ git submodule update --init --recursive
 特别鸣谢以下项目和团队，他们的工作为本项目的发展提供了宝贵的支持和灵感：
 
 - **[how2heap](https://github.com/shellphish/how2heap)**：本项目的灵感和部分代码来源于该项目。
-- **[glibc-all-in-one](链接到glibc-all-in-one的仓库)**：本项目使用了 `glibc-all-in-one` 以便于在不同版本的 glibc 环境下测试和调试。
+- **[glibc-all-in-one](https://github.com/matrix1001/glibc-all-in-one)**：本项目使用了 `glibc-all-in-one` 以便于在不同版本的 glibc 环境下测试和调试。

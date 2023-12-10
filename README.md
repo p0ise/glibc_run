@@ -77,4 +77,4 @@ If you have any questions or suggestions, please contact us by [creating an issu
 Special thanks go to the following projects and teams whose work provided valuable support and inspiration for the development of this project:
 
 - **[how2heap](https://github.com/shellphish/how2heap)**: The inspiration and part of the code for this project come from this project.
-- **[glibc-all-in-one] (link to the repository of glibc-all-in-one)**: This project uses `glibc-all-in-one` to facilitate the use of different versions of glibc environments Testing and debugging.
+- **[glibc-all-in-one](https://github.com/matrix1001/glibc-all-in-one)**: This project uses `glibc-all-in-one` to facilitate the use of different versions of glibc environments Testing and debugging.
