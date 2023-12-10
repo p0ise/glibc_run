@@ -1,6 +1,7 @@
 #!/bin/bash
 
-VERSION="./glibc_versions"
+SCRIPT_DIR=$( cd "$( dirname "$(readlink -f "${BASH_SOURCE[0]}")" )" &> /dev/null && pwd )
+VERSION="$SCRIPT_DIR/glibc_versions"
 #DIR_TCACHE='tcache'
 DIR_TCACHE=''
 DIR_HOST='x64'
@@ -15,36 +16,87 @@ NOT_EXECUTION=''
 FORCE_TARGET_INTERPRETER=''
 
 # Handle arguments
-function show_help {
-    echo "Usage: $0 <version> <target> [-h] [-i686] [-u] [-r] [-gdb | -r2 | -p]"
-    echo "-i686 - use x32 bits libc"
-    echo "-u - update libc list in glibc-all-in-one"
-    echo "-r - download libc in glibc-all-in-one"
-    echo "-gdb - start target in GDB"
-    echo "-r2 - start target in radare2"
-    echo "-p - just set interpreter and rpath in target without execution"
+function show_help() {
+    echo "Usage: $0 <version> <target> [options]"
+    echo "Options:"
+    echo "  -i686                  Use x32 bits libc"
+    echo "  -u                     Update libc list in glibc-all-in-one"
+    echo "  -r                     Download libc in glibc-all-in-one"
+    echo "  -gdb                   Start target in GDB"
+    echo "  -r2                    Start target in radare2"
+    echo "  -p                     Just set interpreter and rpath in target without execution"
+    echo "  -ti                    Force target interpreter"
 }
 
-if [[ $# < 2 ]]; then
+if [[ $# -lt 2 ]]; then
     show_help
     exit 1
 fi
 
+GLIBC_VERSION=$1
+GLIBC_MAJOR=$(echo $GLIBC_VERSION | cut -d'.' -f1)
+GLIBC_MINOR=$(echo $GLIBC_VERSION | cut -d'.' -f2)
+TARGET=$2
+SYSTEM_GLIBC_VERSION=$(lsof -p $$ 2>/dev/null | grep libc- | awk ' { print $NF" --version"; } ' | sh | head -n 1 | cut -d' ' -f 10 | cut -d'.' -f 1-2)
+SYSTEM_GLIBC_MAJOR=$(echo $SYSTEM_GLIBC_VERSION | cut -d'.' -f1)
+SYSTEM_GLIBC_MINOR=$(echo $SYSTEM_GLIBC_VERSION | cut -d'.' -f2)
+SYSTEM_GLIBC=$(lsof -p $$ 2>/dev/null | grep libc- | awk ' { print $NF" --version"; } ' | sh | head -n 1 | cut -d' ' -f 10)
+shift 2
+
+while (( "$#" )); do
+    case $1 in
+        -h|--help)
+            show_help
+            exit
+            ;;
+        -i686)
+            DIR_HOST='i686'
+            LIB_HOST='i386'
+            ;;
+        -u)
+            UPDATE='X'
+            ;;
+        -r)
+            RELOAD='X'
+            ;;
+        -gdb)
+            GDB='X'
+            ;;
+        -r2)
+            RADARE2='X'
+            ;;
+        -p)
+            NOT_EXECUTION='X'
+            ;;
+        -ti)
+            FORCE_TARGET_INTERPRETER='X'
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+    shift
+done
+
 function init_glibc(){
+    cd $SCRIPT_DIR
     git submodule update --init --recursive
+    cd -
 }
 
 function update_glibc (){
-    if [ "$1" == "X" ] || [ ! -f glibc-all-in-one/list ]; then
-        cd glibc-all-in-one
+    if [ "$1" == "X" ] || [ ! -f $SCRIPT_DIR/glibc-all-in-one/list ]; then
+        cd $SCRIPT_DIR/glibc-all-in-one
         ./update_list
         cd -
     fi
 }
 
 function download_glibc (){
-    if [ "$2" == "X" ] || [ ! -d glibc-all-in-one/libs/$libc ]; then
-        cd glibc-all-in-one
+    if [ "$2" == "X" ] || [ ! -d $SCRIPT_DIR/glibc-all-in-one/libs/$libc ]; then
+        cd $SCRIPT_DIR/glibc-all-in-one
         rm -rf libs/$1 debs/$1
         ./download $1
         ./download_old $1
@@ -54,8 +106,8 @@ function download_glibc (){
 
 function copy_glibc (){
     if [ ! -f "$OUTPUT_DIR/libc-$GLIBC_VERSION.so" ]; then
-        cp -r glibc-all-in-one/libs/$1/* $OUTPUT_DIR
-        cp -r glibc-all-in-one/libs/$1/.debug $OUTPUT_DIR
+        cp -r $SCRIPT_DIR/glibc-all-in-one/libs/$1/* $OUTPUT_DIR
+        cp -r $SCRIPT_DIR/glibc-all-in-one/libs/$1/.debug $OUTPUT_DIR
     fi
 }
 
@@ -79,60 +131,12 @@ function set_rpath (){
     fi
 }
 
-GLIBC_VERSION=$1
-GLIBC_MAJOR=$(echo $GLIBC_VERSION | cut -d'.' -f1)
-GLIBC_MINOR=$(echo $GLIBC_VERSION | cut -d'.' -f2)
-TARGET=$2
-SYSTEM_GLIBC_VERSION=$(lsof -p $$ 2>/dev/null | grep libc- | awk ' { print $NF" --version"; } ' | sh | head -n 1 | cut -d' ' -f 10 | cut -d'.' -f 1-2)
-SYSTEM_GLIBC_MAJOR=$(echo $SYSTEM_GLIBC_VERSION | cut -d'.' -f1)
-SYSTEM_GLIBC_MINOR=$(echo $SYSTEM_GLIBC_VERSION | cut -d'.' -f2)
-SYSTEM_GLIBC=$(lsof -p $$ 2>/dev/null | grep libc- | awk ' { print $NF" --version"; } ' | sh | head -n 1 | cut -d' ' -f 10)
-
-if [ ! -f $TARGET ]; then
-    echo "Create binaries by make"
-    exit
+if [ ! -f "$TARGET" ]; then
+    echo "Error: Target binary '$TARGET' not found."
+    exit 1
 fi
 
-while :; do
-    case $3 in
-        -h|-\?|--help)
-            show_help
-            exit
-        ;;
-        #        -disable-tcache)
-        #            DIR_TCACHE='notcache'
-        #            ;;
-        -i686)
-            DIR_HOST='i686'
-            LIB_HOST='i386'
-        ;;
-        -u)
-            UPDATE='X'
-        ;;
-        -r)
-            RELOAD='X'
-        ;;
-        -gdb)
-            GDB='X'
-        ;;
-        -r2)
-            RADARE2='X'
-        ;;
-        -p)
-            NOT_EXECUTION='X'
-        ;;
-        -ti)
-            FORCE_TARGET_INTERPRETER='X'
-        ;;
-        '')
-            break
-        ;;
-    esac
-    shift
-done
-
-
-if [ ! -d ./glibc-all-in-one/LICENSE ]; then
+if [ ! -d $SCRIPT_DIR/glibc-all-in-one/LICENSE ]; then
     init_glibc
 fi
 
@@ -148,11 +152,11 @@ then
 fi
 
 update_glibc $UPDATE
-libc=$(cat glibc-all-in-one/list | grep "$GLIBC_VERSION" | grep "$LIB_HOST" | head -n 1) 
+libc=$(cat $SCRIPT_DIR/glibc-all-in-one/list | grep "$GLIBC_VERSION" | grep "$LIB_HOST" | head -n 1) 
 
 if [ -z "$libc" ]
 then
-    libc=$(cat glibc-all-in-one/old_list | grep "$GLIBC_VERSION" | grep "$LIB_HOST" | head -n 1)
+    libc=$(cat $SCRIPT_DIR/glibc-all-in-one/old_list | grep "$GLIBC_VERSION" | grep "$LIB_HOST" | head -n 1)
 fi
 
 download_glibc $libc $RELOAD
